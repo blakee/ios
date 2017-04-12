@@ -60,57 +60,47 @@ class CCloadItemData: NSObject {
                                     let dateFormatter = DateFormatter()
                                     dateFormatter.dateFormat = "yyyy-MM-dd HH-mm-ss-"
                                     conuter += 1
-                                    
-                                    if let image = item as? UIImage {
-                                        
-                                        print("item as UIImage")
-                                        
-                                        if let pngImageData = UIImagePNGRepresentation(image) {
-                                        
-                                            let fileName = "\(dateFormatter.string(from: Date()))\(conuter).png"
-                                            let filenamePath = directoryUser + "/" + fileName
-                                        
-                                            let result = (try? pngImageData.write(to: URL(fileURLWithPath: filenamePath), options: [.atomic])) != nil
-                                        
-                                            if result {
-                                         
-                                                filesName.append(fileName)
-                                            }
-                                            
-                                        } else {
-                                         
-                                            print("Error image nil")
-                                        }
-                                    }
-                                    
+
                                     if let url = item as? URL {
                                         
                                         print("item as url: \(String(describing: item))")
-                                        
-                                        let pathExtention = URL(fileURLWithPath: url.lastPathComponent).pathExtension
-                                        let fileName = "\(dateFormatter.string(from: Date()))\(conuter).\(pathExtention)"
-                                        let filenamePath = directoryUser + "/" + fileName
-                                        
-                                        do {
-                                            try FileManager.default.copyItem(atPath: url.path, toPath:filenamePath)
+
+                                        var fileName : String
+                                        var filenamePath : String
+
+                                        if url.scheme?.lowercased() != "file" {
+                                            let host = url.host ?? "Unknown"
+                                            fileName = "\(host) Web Link \(dateFormatter.string(from: Date()))\(conuter).txt"
+                                            filenamePath = directoryUser + "/" + fileName
                                             
+                                            FileManager.default.createFile(atPath: filenamePath, contents:url.absoluteString.data(using: String.Encoding(rawValue: String.Encoding.utf8.rawValue)), attributes:nil)
+
+                                        } else {
+                                            let pathExtention = URL(fileURLWithPath: url.lastPathComponent).pathExtension.lowercased()
+                                            fileName = "\(dateFormatter.string(from: Date()))\(conuter).\(pathExtention)"
+                                            filenamePath = directoryUser + "/" + fileName
+
                                             do {
-                                                let attr : NSDictionary? = try FileManager.default.attributesOfItem(atPath: filenamePath) as NSDictionary?
-                                                
-                                                if let _attr = attr {
-                                                    if _attr.fileSize() > 0 {
-                                                        
-                                                        filesName.append(fileName)
-                                                    }
-                                                }
-                                                
+                                                print("Copy: \(url.path) to \(filenamePath)")
+
+                                                try FileManager.default.copyItem(atPath: url.path, toPath:filenamePath)
                                             } catch let error as NSError {
-                                                
-                                                print("Error: \(error.localizedDescription)")
-                                            }                                            
+
+                                                print("Cannot copy file: \(error.localizedDescription)")
+                                            }
+                                        }
+
+                                        do {
+                                            let attr : NSDictionary? = try FileManager.default.attributesOfItem(atPath: filenamePath) as NSDictionary?
+
+                                            if let _attr = attr {
+                                                if _attr.fileSize() > 0 {
+                                                    filesName.append(fileName)
+                                                }
+                                            }
+
                                         } catch let error as NSError {
-                                            
-                                            print("Cannot copy file: \(error.localizedDescription)")
+                                            print("Error: \(error.localizedDescription)")
                                         }
                                     }
                                     
